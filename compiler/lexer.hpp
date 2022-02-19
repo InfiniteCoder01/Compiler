@@ -2,6 +2,8 @@
 
 void terminate() {
   fprintf(stderr, "Compilation terminated!\n");
+  fflush(stdout);
+  fflush(stderr);
   exit(-1);
 }
 
@@ -10,11 +12,27 @@ namespace lexer {
 #include "message.hpp"
 
   map<string, string> definitions;
-  vector<path> includePaths;
+  vector<Path> includePaths;
   bool prevLiteral = false; // TODO
 
   void begin(string filename) {
     open(filename);
+  }
+
+  string getIncludePath(string includePath, bool local) {
+    if(local) {
+      Path path = fs::absolute(getFile().path).append(includePath);
+      if(fs::exists(path)) {
+        return path.generic_string();
+      }
+    }
+    for(Path path : includePaths) {
+      Path _path = fs::absolute(path).append(includePath);
+      if(fs::exists(_path)) {
+        return _path.generic_string();
+      }
+    }
+    error("Unknown include path " + includePath);
   }
 
   bool match(string text) {
@@ -45,7 +63,7 @@ namespace lexer {
     return out;
   }
 
-  string parseBackslash() { // TODO: invalid backslash character error
+  string parseBackslash() {
     if (getChar() == 'a') {
       return "\a";
     } else if (getChar() == 'b') {
@@ -108,6 +126,10 @@ namespace lexer {
     }
   }
 
+  inline void skipSpaces(bool andLines = false) {
+    while(andLines ? isspace(getChar()) : isspacenotln(getChar())) nextChar();
+  }
+
   Token _nextToken() {
     while (true) {
       while (isspace(getChar())) {
@@ -142,20 +164,61 @@ namespace lexer {
       Token token = parseOperator();
       if (token.type == TokenType::_EOF) {
         error("Unknown token starts with " + string(1, getChar()));
-        terminate();
       }
       prevLiteral = false;
       return token;
     }
   }
 
-  Token nextToken() { // TODO: define, undef, include, if, ifdef, ifndef, else, elif, elifdef, elifndef, endif, line, error, pragma # ##
-    Token token = _nextToken();
-    if(token.match(TokenType::OPERATOR, "#")) {
+  Token nextToken() { // TODO: define, undef, if, ifdef, ifndef, else, elif, elifdef, elifndef, endif, pragma # ##
+    Token token;
+    while(true) {
+      skipSpaces(true);
       token = _nextToken();
-      if(token.match(TokenType::WORD, "include")) {
-        //
+      if(token.match(TokenType::OPERATOR, "#")) {
+        skipSpaces();
+        token = _nextToken();
+        if(token.match(TokenType::WORD, "include")) {
+          skipSpaces();
+          bool local = getChar() == '\"';
+          string includePath;
+          if(local) {
+            nextChar();
+            includePath = readUntil('\"');
+          } else if(getChar() == '<') {
+            includePath = parsePath();
+          } else {
+            error("Invailid include path");
+          }
+          open(getIncludePath(includePath, local));
+        } else if(token.match(TokenType::WORD, "line")) {
+          skipSpaces();
+          if(!isdigit(getChar())) {
+            error("Invalid line!");
+          }
+          getFile().line = stoul(parseNumber().text) - 1;
+          skipSpaces();
+          if(getChar() != '\n' && getChar() != '\0' && getChar() != '\"') {
+            error("Invalid filename in line directive!");
+          }
+          if(getChar() == '\"') {
+            nextChar();
+            getFile().path = readUntil('\"');
+          }
+        } else if(token.match(TokenType::WORD, "error")) {
+          skipSpaces();
+          if(getChar() == '\"') {
+            nextChar();
+            error(readUntil('\"'));
+          } else {
+            error(readUntil('\n'));
+          }
+        } else {
+          error("Invalid preprocessor directive " + token.text);
+        }
+        continue;
       }
+      break;
     }
     return token;
   }

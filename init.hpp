@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <filesystem>
+#include <algorithm>
 #include <utility>
 #include <vector>
 #include <string>
@@ -9,12 +10,13 @@ using std::min;
 using std::pair;
 using std::stoul;
 using std::string;
+using std::remove;
 using std::vector;
 using std::to_string;
 using std::runtime_error;
-using std::filesystem::path;
+using Path = std::filesystem::path;
 namespace fs = std::filesystem;
 
-bool inRange(int value, int low, int high) {
+inline bool inRange(int value, int low, int high) {
     return value >= low && value <= high;
 }

@@ -1,6 +1,6 @@
 struct BufferedReader {
   FILE* file;
-  path filepath;
+  Path path;
   size_t line, column;
   string buffer;
 
@@ -8,7 +8,7 @@ struct BufferedReader {
   }
 
   BufferedReader(string filename) {
-    filepath = filename;
+    path = filename;
     file = fopen(filename.c_str(), "r");
     line = column = 1;
   }
@@ -18,6 +18,7 @@ struct BufferedReader {
       int append = count - buffer.length();
       buffer.resize(count);
       fread(buffer.data() + count - append, 1, append, file);
+      buffer.erase(remove(buffer.begin(), buffer.end(), '\r'), buffer.end());
     }
     return buffer.substr(0, min(count, buffer.length()));
   }

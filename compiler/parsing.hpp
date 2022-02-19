@@ -1,4 +1,24 @@
-using namespace lexer;
+using lexer::parseBackslash;
+using lexer::nextChar;
+using lexer::getChar;
+using lexer::match;
+
+string readUntil(char c, bool newline = false) {
+  string str = "";
+  do {
+    if (getChar() == '\\') {
+      nextChar();
+      str += parseBackslash();
+    } else {
+      str += getChar();
+    }
+  } while (nextChar() != c && (!newline ? getChar() != '\n' : true) && getChar() != '\0');
+  if (getChar() != c) {
+    error(string("Missing terminating ") + c + " character");
+  }
+  nextChar();
+  return str;
+}
 
 Token parseWord(bool suffix) {
   string word = "";
@@ -39,36 +59,17 @@ Token parseNumber() { // TODO: better number parser
   return Token(TokenType::NUMBER, n);
 }
 
-Token parseString() {
-  string str = "";
-  while (nextChar() != '\"' && getChar() != '\n' && getChar() != '\0') {
-    if (getChar() == '\\') {
-      nextChar();
-      str += parseBackslash();
-    } else {
-      str += getChar();
-    }
-  }
-  if (getChar() != '\"') {
-    error("Missing terminating \" character");
-  }
+inline Token parseString() {
   nextChar();
-  return Token(TokenType::STRING, str);
+  return Token(TokenType::STRING, readUntil('\"'));
 }
 
-Token parseChar() { // TODO: too long characters (show error)
-  string chr = "";
-  while (nextChar() != '\'' && getChar() != '\n' && getChar() != '\0') {
-    if (getChar() == '\\') {
-      nextChar();
-      chr += parseBackslash();
-    } else {
-      chr += getChar();
-    }
-  }
-  if (getChar() != '\'') {
-    error("Missing terminating \' character");
-  }
+inline Token parseChar() { // TODO: too long characters (show error)
   nextChar();
-  return Token(TokenType::CHAR, chr);
+  return Token(TokenType::CHAR, readUntil('\''));
+}
+
+inline string parsePath() {
+  nextChar();
+  return readUntil('>');
 }

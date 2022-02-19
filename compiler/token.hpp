@@ -69,6 +69,7 @@ vector<pair<string, Token>> operators = {
   {"&=", Token(TokenType::OPERATOR, "&=")},
   {"^=", Token(TokenType::OPERATOR, "^=")},
   {"|=", Token(TokenType::OPERATOR, "|=")},
+  {"##", Token(TokenType::OPERATOR, "##")},
   {".", Token(TokenType::OPERATOR, ".")},
   {"!", Token(TokenType::OPERATOR, "!")},
   {"~", Token(TokenType::OPERATOR, "~")},
@@ -92,5 +93,6 @@ vector<pair<string, Token>> operators = {
   {",", Token(TokenType::OPERATOR, ",")},
   {":", Token(TokenType::OPERATOR, ":")},
   {"=", Token(TokenType::OPERATOR, "=")},
-  {";", Token(TokenType::OPERATOR, ";")}
+  {";", Token(TokenType::OPERATOR, ";")},
+  {"#", Token(TokenType::OPERATOR, "#")}
 };
