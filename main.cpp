@@ -1,6 +1,5 @@
 #include "init.hpp"
 #include "character.hpp"
-// #include "compiler/preprocessor.hpp"
 #include "compiler/lexer.hpp"
 
 int main() {

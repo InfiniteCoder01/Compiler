@@ -1,5 +1,7 @@
+// #include <iostream>
 using namespace std;
-
-int main() {
-  // cout << "Hello, Roma!\n";
+#define A aaa
+#define A bbb
+int main() {//false""true _ALIGNED_NEW_SUPPORTED
+  // cout << str(a b sss  f);
 }

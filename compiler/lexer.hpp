@@ -11,7 +11,7 @@ namespace lexer {
 #include "fileio.hpp"
 #include "message.hpp"
 
-  map<string, string> definitions;
+  map<string, pair<pair<bool, vector<string>>, string>> definitions;
   vector<Path> includePaths;
   bool prevLiteral = false; // TODO: literals
 
@@ -20,15 +20,15 @@ namespace lexer {
   }
 
   string getIncludePath(string includePath, bool local) {
-    if(local) {
+    if (local) {
       Path path = fs::absolute(getFile().path).append(includePath);
-      if(fs::exists(path)) {
+      if (fs::exists(path)) {
         return path.generic_string();
       }
     }
-    for(Path path : includePaths) {
+    for (Path path : includePaths) {
       Path _path = fs::absolute(path).append(includePath);
-      if(fs::exists(_path)) {
+      if (fs::exists(_path)) {
         return _path.generic_string();
       }
     }
@@ -37,7 +37,8 @@ namespace lexer {
 
   bool match(string text) {
     if (getFile().requestBuffer(text.length()) == text) {
-      for (int i = 0; i < text.length(); i++) nextChar();
+      for (int i = 0; i < text.length(); i++)
+        nextChar();
       return true;
     }
     return false;
@@ -127,7 +128,8 @@ namespace lexer {
   }
 
   inline void skipSpaces(bool andLines = false) {
-    while(andLines ? isspace(getChar()) : isspacenotln(getChar())) nextChar();
+    while (andLines ? isspace(getChar()) : isspacenotln(getChar()))
+      nextChar();
   }
 
   Token _nextToken() {
@@ -170,52 +172,103 @@ namespace lexer {
     }
   }
 
-  Token nextToken() { // TODO: define, undef, if, ifdef, ifndef, else, elif, elifdef, elifndef, endif, pragma # ##
+  Token nextToken() { // TODO: define, if, ifdef, ifndef, else, elif, elifdef, elifndef, endif, pragma import using # ##
     Token token;
-    while(true) {
+    while (true) {
       skipSpaces(true);
       token = _nextToken();
-      if(token.match(TokenType::OPERATOR, "#")) {
+      if (token.match(TokenType::OPERATOR, "#")) {
         skipSpaces();
         token = _nextToken();
-        if(token.match(TokenType::WORD, "include")) {
+        if (token.match(TokenType::WORD, "include")) {
           skipSpaces();
           bool local = getChar() == '\"';
           string includePath;
-          if(local) {
+          if (local) {
             nextChar();
             includePath = readUntil('\"');
-          } else if(getChar() == '<') {
+          } else if (getChar() == '<') {
             includePath = parsePath();
           } else {
             error("Invailid include path");
           }
           open(getIncludePath(includePath, local));
-        } else if(token.match(TokenType::WORD, "line")) {
+        } else if (token.match(TokenType::WORD, "line")) {
           skipSpaces();
-          if(!isdigit(getChar())) {
+          if (!isdigit(getChar())) {
             error("Invalid line!");
           }
           getFile().line = stoul(parseNumber().text) - 1;
           skipSpaces();
-          if(getChar() != '\n' && getChar() != '\0' && getChar() != '\"') {
+          if (getChar() != '\n' && getChar() != '\0' && getChar() != '\"') {
             error("Invalid filename in line directive!");
           }
-          if(getChar() == '\"') {
+          if (getChar() == '\"') {
             nextChar();
             getFile().path = readUntil('\"');
           }
-        } else if(token.match(TokenType::WORD, "error")) {
+        } else if (token.match(TokenType::WORD, "error")) {
           skipSpaces();
-          if(getChar() == '\"') {
+          if (getChar() == '\"') {
             nextChar();
             error(readUntil('\"'));
           } else {
             error(readUntil('\n'));
           }
+        } else if (token.match(TokenType::WORD, "define")) {
+          skipSpaces();
+          if (!isidentifierstart(getChar())) {
+            error("Definition is not identifier");
+          }
+          string definition = parseWord(false).text;
+          if (definitions.contains(definition)) {
+            warning("Redefinition of " + definition);
+          }
+          vector<string> args;
+          bool hasArgs = getChar() == '(';
+          if (hasArgs) {
+            // TODO: parseArgs
+            bool vaArgs = true;
+            nextChar();
+            skipSpaces();
+            while (isidentifierstart(getChar())) {
+              args.push_back(parseWord(false).text);
+              skipSpaces();
+              if (!match(",")) {
+                vaArgs = false;
+                break;
+              }
+              skipSpaces();
+            }
+            if (vaArgs) {
+              if (!match("...")) {
+                error("Invalid macro arguments");
+              }
+              args.push_back("...");
+            }
+            if (!match(")")) {
+              error("Missing terminating ) character");
+            }
+          }
+          skipSpaces();
+          if (getChar() == '\n') {
+            definitions[definition] = make_pair(make_pair(hasArgs, args), "");
+          } else {
+            definitions[definition] = make_pair(make_pair(hasArgs, args), readUntil('\n'));
+          }
+        } else if (token.match(TokenType::WORD, "undef")) {
+          skipSpaces();
+          if (!isidentifierstart(getChar())) {
+            error("Invalid undef directive");
+          }
+          string definition = parseWord(false).text;
+          definitions.erase(definition);
         } else {
           error("Invalid preprocessor directive " + token.text);
         }
+        continue;
+      } else if (count(replacibles.begin(), replacibles.end(), token.type) && definitions.contains(token.text)) {
+        getFile().buffer.insert(0, definitions[token.text].second);
         continue;
       }
       break;
@@ -231,5 +284,5 @@ namespace lexer {
   }
 }
 
-using lexer::message;
 using lexer::error;
+using lexer::message;

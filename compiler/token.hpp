@@ -42,7 +42,7 @@ struct Token {
   }
 };
 
-vector<pair<string, Token>> operators = {
+inline vector<pair<string, Token>> operators = {
   {"->*", Token(TokenType::OPERATOR, "->*")},
   {"<=>", Token(TokenType::OPERATOR, "<=>")},
   {"<<=", Token(TokenType::OPERATOR, "<<=")},
@@ -95,4 +95,10 @@ vector<pair<string, Token>> operators = {
   {"=", Token(TokenType::OPERATOR, "=")},
   {";", Token(TokenType::OPERATOR, ";")},
   {"#", Token(TokenType::OPERATOR, "#")}
+};
+
+inline vector<TokenType> replacibles = {
+  TokenType::WORD,
+  TokenType::PREFIX,
+  TokenType::SUFFIX
 };

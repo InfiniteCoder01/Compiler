@@ -5,16 +5,17 @@ using lexer::match;
 
 string readUntil(char c, bool newline = false) {
   string str = "";
-  do {
+  while (getChar() != c && (!newline ? getChar() != '\n' : true) && getChar() != '\0') {
     if (getChar() == '\\') {
       nextChar();
       str += parseBackslash();
     } else {
       str += getChar();
     }
-  } while (nextChar() != c && (!newline ? getChar() != '\n' : true) && getChar() != '\0');
+    nextChar();
+  }
   if (getChar() != c) {
-    error(string("Missing terminating ") + c + " character");
+    error(format("Missing terminating {} character", c));
   }
   nextChar();
   return str;

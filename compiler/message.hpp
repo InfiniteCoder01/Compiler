@@ -6,3 +6,7 @@ void error(string error) {
   message(stderr, "Error: " + error);
   terminate();
 }
+
+void warning(string warning) {
+  message(stdout, "Warning: " + warning);
+}
