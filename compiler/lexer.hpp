@@ -13,7 +13,7 @@ namespace lexer {
 
   map<string, string> definitions;
   vector<Path> includePaths;
-  bool prevLiteral = false; // TODO
+  bool prevLiteral = false; // TODO: literals
 
   void begin(string filename) {
     open(filename);

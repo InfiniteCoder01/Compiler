@@ -5,9 +5,10 @@
 
 int main() {
     string filename = "test.hpp";
-    // string outfile = "test.exe";
-    lexer::includePaths.push_back("/mnt/c/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/9.2.0/include/c++/");
-    lexer::includePaths.push_back("/mnt/c/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/x86_64-w64-mingw32/include/");
+    lexer::includePaths.push_back("/mnt/d/Dev/C++/Compilation/STL/C/include");
+    lexer::includePaths.push_back("/mnt/d/Dev/C++/Compilation/STL/C++/include");
+    lexer::definitions["true"] = "1";
+    lexer::definitions["false"] = "0";
     lexer::begin(filename);
     while (true) {
         Token t = lexer::nextToken();

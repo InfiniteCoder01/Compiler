@@ -14,7 +14,7 @@ struct BufferedReader {
   }
 
   string requestBuffer(size_t count) {
-    if(buffer.length() < count) {
+    while(buffer.length() < count) {
       int append = count - buffer.length();
       buffer.resize(count);
       fread(buffer.data() + count - append, 1, append, file);
